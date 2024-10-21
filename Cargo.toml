@@ -1,0 +1,11 @@
+[package]
+name = "threed-test"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.90"
+rusttype = "0.9.3"
+three-d = { git = "https://github.com/asny/three-d.git", version = "0.18.0", features = ["text"] }
+three-d-asset = "0.7.0"
+tokio = { version = "1.40.0", features = ["rt", "macros", "rt-multi-thread"] }

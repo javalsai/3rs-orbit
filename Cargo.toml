@@ -5,7 +5,11 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.90"
+cgmath = { version = "0.18.0", features = ["serde"] }
 rusttype = "0.9.3"
+serde = { version = "1.0.210", features = ["derive"] }
+serde_toml = "0.0.1"
 three-d = { git = "https://github.com/asny/three-d.git", version = "0.18.0", features = ["text"] }
 three-d-asset = "0.7.0"
 tokio = { version = "1.40.0", features = ["rt", "macros", "rt-multi-thread"] }
+toml = "0.8.19"

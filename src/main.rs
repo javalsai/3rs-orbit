@@ -1,10 +1,15 @@
+mod config;
+mod consts;
+
+use std::{fs::File, io::Read};
+
 use three_d::*;
 
-struct GBody {
-    pub name: &'static str,
+pub struct GBody {
+    pub name: String,
     pub pos: Vector3<f32>,
     pub vel: Vector3<f32>,
-    pub color: u32,
+    pub color: Srgba,
     pub radius: f32,
     pub mass: f32,
     pub gm_sphere: Gm<Mesh, PhysicalMaterial>,
@@ -13,13 +18,11 @@ struct GBody {
 impl GBody {
     pub fn new(
         ctx: &Context,
-        name: &'static str,
-        color: u32,
+        name: String,
+        color: Srgba,
         radius: f32,
         mass: f32,
     ) -> Result<Self, three_d_asset::Error> {
-        let [r, g, b, a] = unsafe { std::mem::transmute(color.to_be()) };
-
         let mut sphere_mesh = CpuMesh::sphere(16);
         sphere_mesh.transform(&Mat4::from_scale(radius))?;
         let gm_sphere = Gm::new(
@@ -27,7 +30,7 @@ impl GBody {
             PhysicalMaterial::new_transparent(
                 &ctx,
                 &CpuMaterial {
-                    albedo: Srgba { r, g, b, a },
+                    albedo: color,
                     ..Default::default()
                 },
             ),
@@ -79,7 +82,7 @@ struct PhysicsMesh {
 impl Default for PhysicsMesh {
     fn default() -> Self {
         Self {
-            const_g: 6.67e-11, // mm³/(kg·ms²)
+            const_g: consts::GRAVITATIONAL_CONSTANT,
             components: vec![],
         }
     }
@@ -107,25 +110,31 @@ impl PhysicsMesh {
         let len = self.components.len();
 
         for i in 0..len {
-            // Split the slice at index `i + 1` to get two non-overlapping slices
             let (from_slice, rest) = self.components.split_at_mut(i + 1);
             let from = &mut from_slice[i]; // Safe mutable borrow
 
             for to in rest {
-                println!("{} ({:?}) -> {} ({:?})", from.name, from.pos, to.name, to.pos);
+                //println!(
+                //    "{} ({:?}) -> {} ({:?})",
+                //    from.name, from.pos, to.name, to.pos
+                //);
                 let distance_sq = from.pos.distance2(to.pos);
                 let accel = (self.const_g * to.mass) / distance_sq;
                 from.accelerate_to(accel * dt, to.pos);
 
-
-                println!("{} ({:?}) -> {} ({:?})", to.name, to.pos, from.name, from.pos);
+                //println!(
+                //    "{} ({:?}) -> {} ({:?})",
+                //    to.name, to.pos, from.name, from.pos
+                //);
                 let distance_sq = to.pos.distance2(from.pos);
                 let accel = (self.const_g * from.mass) / distance_sq;
                 to.accelerate_to(accel * dt, from.pos);
             }
         }
 
-        self.components.iter_mut().for_each(|gbody| gbody.process(dt));
+        self.components
+            .iter_mut()
+            .for_each(|gbody| gbody.process(dt));
     }
 
     pub fn render<'a>(&'a mut self) -> Vec<&dyn Object> {
@@ -142,40 +151,40 @@ impl PhysicsMesh {
 #[cfg(not(target_arch = "wasm32"))]
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    run().await
+    let mut conf_file = File::open("config.toml")?;
+    let mut config = String::new();
+    conf_file.read_to_string(&mut config)?;
+    let config: config::Config = toml::from_str(&config)?;
+
+    run(config).await
 }
 
-pub async fn run() -> anyhow::Result<()> {
+pub async fn run(config: config::Config) -> anyhow::Result<()> {
+    println!("{config:?}");
     let window = Window::new(WindowSettings {
-        title: "Orbit!".to_string(),
-        max_size: Some((1280, 720)),
+        title: config.global.window_name,
+        max_size: config.global.window_size,
         ..Default::default()
     })
     .unwrap();
     let context = window.gl();
 
-    let mut sun = GBody::new(&context, "sun", 0xffff00ff, 6.957, 1.989e30 / 1e23)?;
-    sun.set_motion(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0));
-    let mut earth = GBody::new(&context, "earth", 0x006994ff, 0.6371, 5.972e24 / 1e23)?;
-        earth.set_motion(vec3(149.0 / 5.0, 0.0, 0.0), vec3(0.0, 0.006, 0.0));
-
-    let mut pmesh = PhysicsMesh::default();
-    pmesh.add(sun);
-    pmesh.add(earth);
-
-    let mut camera = Camera::new_perspective(
-        window.viewport(),
-        Vector3::zero(),
-        vec3(0.0, 0.5, 0.0),
-        vec3(0.0, 0.0, 1.0),
-        degrees(45.0),
-        0.1,
-        100000.0,
-    );
+    let mut camera = config.camera.as_camera(window.viewport());
     let mut control = OrbitControl::new(*camera.target(), 1.0, 10000.0);
 
-    let light0 = DirectionalLight::new(&context, 1.0, Srgba::WHITE, &vec3(0.0, -0.5, -0.5));
-    let light1 = DirectionalLight::new(&context, 1.0, Srgba::WHITE, &vec3(0.0, 0.5, 0.5));
+    let mut pmesh = PhysicsMesh::default();
+
+    config
+        .bodies
+        .into_iter()
+        .map(|body| body.as_gbody(&context).expect("error making body"))
+        .for_each(|gbody| pmesh.add(gbody));
+
+    let lights: Vec<_> = config
+        .directional_lights
+        .into_iter()
+        .map(|light| light.as_dlight(&context))
+        .collect();
 
     //let skybox = Skybox::new_from_equirectangular(&context, &CpuTexture::default());
 
@@ -183,11 +192,19 @@ pub async fn run() -> anyhow::Result<()> {
         camera.set_viewport(frame_input.viewport);
         control.handle_events(&mut camera, &mut frame_input.events);
 
-        pmesh.compute(frame_input.elapsed_time as f32);
+        pmesh.compute((frame_input.elapsed_time * config.cheats.time_mult) as f32);
         frame_input
             .screen()
             .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
-            .render(&camera, pmesh.render().into_iter(), &[&light0, &light1]);
+            .render(
+                &camera,
+                pmesh.render().into_iter(),
+                lights
+                    .iter()
+                    .map(|dlight| dlight as &dyn Light)
+                    .collect::<Vec<_>>()
+                    .as_slice(),
+            );
 
         FrameOutput::default()
     });

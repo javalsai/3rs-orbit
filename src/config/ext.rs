@@ -15,8 +15,8 @@ impl super::ConfigCamera {
 }
 
 impl super::ConfigBody {
-    pub fn as_gbody(self, ctx: &Context) -> Result<crate::GBody, three_d_asset::Error> {
-        let mut body = crate::GBody::new(
+    pub fn as_gbody(self, ctx: &Context) -> Result<crate::physics::GBody, three_d_asset::Error> {
+        let mut body = crate::physics::GBody::new(
             &ctx,
             self.name,
             self.color,

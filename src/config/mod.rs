@@ -100,17 +100,17 @@ pub struct ConfigBody {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ConfigDirectionalLight {
-    intensity: f32,
+    pub intensity: f32,
     #[serde(
         serialize_with = "ser::serialize_srgba",
         deserialize_with = "ser::deserialize_srgba"
     )]
-    color: Srgba,
+    pub color: Srgba,
     #[serde(
         serialize_with = "ser::serialize_vector3",
         deserialize_with = "ser::deserialize_vector3"
     )]
-    position: Vector3<f32>,
+    pub position: Vector3<f32>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]

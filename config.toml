@@ -20,7 +20,7 @@ mass = 4.5e5
 [[bodies]]
 name = "moon"
 position = [8.5, 0, 0]
-velocity = [0, -0.001, 0]
+velocity = [0, -0.0007, 0]
 color = [150, 200, 200, 255]
 radius = 0.2
 mass = 3e2
@@ -54,4 +54,4 @@ color = [255, 255, 255, 255]
 position = [0, 0.5, 0.5]
 
 [cheats]
-time_mult = 0.2
+time_mult = 0.3

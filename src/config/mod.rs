@@ -122,3 +122,50 @@ pub struct Config {
     pub directional_lights: Vec<ConfigDirectionalLight>,
     pub cheats: ConfigCheats,
 }
+
+pub fn example_config() -> Config {
+    let mut config = Config::default();
+
+    config.bodies.push(ConfigBody {
+        name: String::from("sun"),
+        position: vec3(0.0, 0.0, 0.0),
+        velocity: vec3(0.0, 0.0, 0.0),
+        color: Srgba {r: 255, g: 255, b: 0, a: 255},
+        radius: 1.3,
+        mass: 2.6e6,
+    });
+
+    config.bodies.push(ConfigBody {
+        name: String::from("earth"),
+        position: vec3(7.0, 0.0, 0.0),
+        velocity: vec3(0.0, 0.004, 0.0),
+        color: Srgba {r: 0, g: 100, b: 200, a: 255},
+        radius: 0.8,
+        mass: 4.5e5,
+    });
+
+    // as I said, "moon"
+    config.bodies.push(ConfigBody {
+        name: String::from("moon"),
+        position: vec3(8.5, 0.0, 0.0),
+        velocity: vec3(0.0, -0.0007, 0.0),
+        color: Srgba {r: 150, g: 200, b: 200, a: 255},
+        radius: 0.2,
+        mass: 3e2,
+    });
+
+
+    config.directional_lights.push(ConfigDirectionalLight {
+        intensity: 1.0,
+        color: Srgba::WHITE,
+        position: vec3(0.0, -0.5, -0.5),
+    });
+
+    config.directional_lights.push(ConfigDirectionalLight {
+        intensity: 1.0,
+        color: Srgba::WHITE,
+        position: vec3(0.0, 0.5, 0.5),
+    });
+
+    config
+}

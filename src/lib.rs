@@ -37,6 +37,7 @@ pub async fn run(config: config::Config) -> anyhow::Result<()> {
 
     //let skybox = Skybox::new_from_equirectangular(&context, &CpuTexture::default());
 
+    let clear_color_state = srgba_as_clearstate(config.global.background_color, 255);
     window.render_loop(move |mut frame_input| {
         camera.set_viewport(frame_input.viewport);
         orbit_control.handle_events(&mut camera, &mut frame_input.events);
@@ -45,7 +46,7 @@ pub async fn run(config: config::Config) -> anyhow::Result<()> {
         pmesh.compute((frame_input.elapsed_time * config.cheats.time_mult) as f32);
         frame_input
             .screen()
-            .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
+            .clear(clear_color_state)
             .render(
                 &camera,
                 pmesh.render().into_iter(),
@@ -60,4 +61,14 @@ pub async fn run(config: config::Config) -> anyhow::Result<()> {
     });
 
     Ok(())
+}
+
+fn srgba_as_clearstate(srgba: Srgba, depth: u8) -> ClearState {
+    ClearState::color_and_depth(
+        srgba.r as f32 / 255.0,
+        srgba.g as f32 / 255.0,
+        srgba.b as f32 / 255.0,
+        srgba.a as f32 / 255.0,
+        depth as f32 / 255.0,
+    )
 }

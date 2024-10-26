@@ -11,7 +11,11 @@ use three_d::{degrees, vec3, Degrees, Srgba, Vector3, Zero};
 pub struct ConfigGlobal {
     pub window_name: String,
     pub window_size: Option<(u32, u32)>,
-    pub const_g: f32,
+    pub const_g: f32,    #[serde(
+        serialize_with = "ser::serialize_srgba",
+        deserialize_with = "ser::deserialize_srgba"
+    )]
+    pub background_color: Srgba,
 }
 
 impl Default for ConfigGlobal {
@@ -20,6 +24,7 @@ impl Default for ConfigGlobal {
             window_name: String::from("N-Body Gravity Simlation!"),
             window_size: None,
             const_g: crate::consts::GRAVITATIONAL_CONSTANT,
+            background_color: Srgba::new(42, 42, 42, 255)
         }
     }
 }

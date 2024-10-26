@@ -37,8 +37,9 @@ pub async fn run(config: config::Config) -> anyhow::Result<()> {
 
     let clear_color_state = srgba_as_clearstate(config.global.background_color, 255);
     window.render_loop(move |mut frame_input| {
-        if frame_input.elapsed_time > 100.0 {
-            println!("FUCK: {frame_input:?}");
+        if frame_input.elapsed_time > config.global.max_frame_dt {
+            println!("dropping frame ({}ms)", frame_input.elapsed_time);
+            return FrameOutput::default();
         }
         camera.set_viewport(frame_input.viewport);
         orbit_control.handle_events(&mut camera, &mut frame_input.events);

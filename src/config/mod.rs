@@ -16,6 +16,11 @@ pub struct ConfigGlobal {
         deserialize_with = "ser::deserialize_srgba"
     )]
     pub background_color: Srgba,
+    /// Max ms time between frames to ignore the frame
+    /// calculation, in changes of workspace, the window
+    /// will stop rendering and dt will be huge on return,
+    /// usually sending everything flying
+    pub max_frame_dt: f64,
 }
 
 impl Default for ConfigGlobal {
@@ -24,7 +29,9 @@ impl Default for ConfigGlobal {
             window_name: String::from("N-Body Gravity Simlation!"),
             window_size: None,
             const_g: crate::consts::GRAVITATIONAL_CONSTANT,
-            background_color: Srgba::new(42, 42, 42, 255)
+            background_color: Srgba::new(42, 42, 42, 255),
+            // Equivalent to 15Hz btw
+            max_frame_dt: 66.666,
         }
     }
 }

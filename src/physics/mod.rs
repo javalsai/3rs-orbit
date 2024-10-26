@@ -22,7 +22,7 @@ impl GBody {
         sphere_mesh.transform(&Mat4::from_scale(radius))?;
         let gm_sphere = Gm::new(
             Mesh::new(&ctx, &sphere_mesh),
-            PhysicalMaterial::new_transparent(
+            PhysicalMaterial::new_opaque(
                 &ctx,
                 &CpuMaterial {
                     albedo: color,

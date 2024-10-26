@@ -18,7 +18,8 @@ pub async fn run(config: config::Config) -> anyhow::Result<()> {
     let context = window.gl();
 
     let mut camera = config.camera.as_camera(window.viewport());
-    let mut control = OrbitControl::new(*camera.target(), 1.0, 10000.0);
+    let mut orbit_control = OrbitControl::new(*camera.target(), 1.0, 10000.0);
+    let mut fly_control = FlyControl::new(0.01);
 
     let mut pmesh = PhysicsMesh::default();
 
@@ -38,7 +39,8 @@ pub async fn run(config: config::Config) -> anyhow::Result<()> {
 
     window.render_loop(move |mut frame_input| {
         camera.set_viewport(frame_input.viewport);
-        control.handle_events(&mut camera, &mut frame_input.events);
+        orbit_control.handle_events(&mut camera, &mut frame_input.events);
+        fly_control.handle_events(&mut camera, &mut frame_input.events);
 
         pmesh.compute((frame_input.elapsed_time * config.cheats.time_mult) as f32);
         frame_input

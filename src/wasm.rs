@@ -13,30 +13,25 @@ extern "C" {
     fn show_open_file_picker() -> JsValue;
 }
 
+// Mostly chatGPT code tbh, docs and logic sucks
 #[wasm_bindgen(start)]
 pub async fn main() -> Result<(), JsValue> {
     let window = window().ok_or("No global window available")?;
     let document = window.document().ok_or("No document on window")?;
-    let body = document.body().ok_or("No body in document")?;
 
-    // Create the file input element
     let input = document
-        .create_element("input")?
-        .dyn_into::<HtmlInputElement>()?;
+        .create_element("input")
+        .unwrap()
+        .dyn_into::<HtmlInputElement>()
+        .unwrap();
     input.set_type("file");
 
-    // Wrap input in Rc<RefCell> for shared mutability
     let input_rc = Rc::new(RefCell::new(input));
 
-    // Closure to handle clicks on the body
-    let closure = Closure::wrap(Box::new(move || {
-        // Trigger the click on the input element
-        input_rc.borrow().click();
-
-        // Clone the Rc<RefCell<HtmlInputElement>> for the change event closure
+    let open_computer_button = document.get_element_by_id("open-computer").unwrap();
+    let open_computer_closure = Closure::wrap(Box::new(move || {
         let input_clone = input_rc.clone();
         let change_closure = Closure::wrap(Box::new(move || {
-            // Borrow the input to access files
             if let Some(files) = input_clone.borrow().files() {
                 if let Some(file) = files.get(0) {
                     wasm_run_from_conf(file);
@@ -44,17 +39,19 @@ pub async fn main() -> Result<(), JsValue> {
             }
         }) as Box<dyn Fn()>);
 
-        // Add the change event listener to the input
+        input_rc.borrow().click();
         input_rc
             .borrow()
             .add_event_listener_with_callback("change", change_closure.as_ref().unchecked_ref())
             .unwrap();
-        change_closure.forget(); // Keep the closure alive
+        change_closure.forget();
     }) as Box<dyn Fn()>);
 
-    // Attach the event listener to the body
-    body.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref())?;
-    closure.forget(); // Keep the closure alive
+    open_computer_button.add_event_listener_with_callback(
+        "click",
+        open_computer_closure.as_ref().unchecked_ref(),
+    )?;
+    open_computer_closure.forget();
 
     Ok(())
 }
@@ -79,11 +76,8 @@ pub fn wasm_run_from_conf(file: File) {
         }
     }) as Box<dyn Fn(web_sys::Event)>);
 
-    // Set up the reader to call our closure when the read is complete
     reader.set_onload(Some(reader_closure.as_ref().unchecked_ref()));
-    reader_closure.forget(); // Keep the closure alive
+    reader_closure.forget();
 
-    // Read the file as text
     reader.read_as_text(&file).unwrap();
 }
-

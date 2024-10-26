@@ -18,7 +18,7 @@ impl Default for ConfigGlobal {
     fn default() -> Self {
         Self {
             window_name: String::from("N-Body Gravity Simlation!"),
-            window_size: Some((1280, 720)),
+            window_size: None,
             const_g: crate::consts::GRAVITATIONAL_CONSTANT,
         }
     }

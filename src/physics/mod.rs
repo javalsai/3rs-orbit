@@ -100,33 +100,29 @@ impl PhysicsMesh {
         self.components.push(component);
     }
 
-    // TODO: improve this
     pub fn compute(&mut self, dt: f32) {
-        let len = self.components.len();
+        // Here we just change the speed, doesn't influence
+        // the other bodies on their computations
+        for i in 0..self.components.len() {
+            let from = &self.components[i];
+            let mut acc_accel = Vector3::zero();
 
-        for i in 0..len {
-            let (from_slice, rest) = self.components.split_at_mut(i + 1);
-            let from = &mut from_slice[i]; // Safe mutable borrow
+            for to in &self.components {
+                if from.pos == to.pos {
+                    continue;
+                }
 
-            for to in rest {
-                //println!(
-                //    "{} ({:?}) -> {} ({:?})",
-                //    from.name, from.pos, to.name, to.pos
-                //);
                 let distance_sq = from.pos.distance2(to.pos);
                 let accel = (self.const_g * to.mass) / distance_sq;
-                from.accelerate_to(accel * dt, to.pos);
-
-                //println!(
-                //    "{} ({:?}) -> {} ({:?})",
-                //    to.name, to.pos, from.name, from.pos
-                //);
-                let distance_sq = to.pos.distance2(from.pos);
-                let accel = (self.const_g * from.mass) / distance_sq;
-                to.accelerate_to(accel * dt, from.pos);
+                acc_accel += accel * (to.pos - from.pos).normalize();
             }
+
+            let from = &mut self.components[i];
+            from.accelerate(acc_accel * dt);
         }
 
+        // And this would apply those speeds, once it has been computer
+        // without changing them "live"
         self.components
             .iter_mut()
             .for_each(|gbody| gbody.process(dt));

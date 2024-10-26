@@ -1,3 +1,5 @@
+#![feature(trait_upcasting, specialization)]
+
 pub mod config;
 pub mod consts;
 pub mod physics;
@@ -29,7 +31,7 @@ pub async fn run(config: config::Config) -> anyhow::Result<()> {
         .map(|body| body.as_gbody(&context).expect("error making body"))
         .for_each(|gbody| pmesh.add(gbody));
 
-    let lights = config.lights.as_dyn_lights(&context);
+    let mut lights = config.lights.as_scene_lighting(&context); // .as_dyn_lights(&context);
 
     //let skybox = Skybox::new_from_equirectangular(&context, &CpuTexture::default());
 
@@ -40,18 +42,18 @@ pub async fn run(config: config::Config) -> anyhow::Result<()> {
         fly_control.handle_events(&mut camera, &mut frame_input.events);
 
         pmesh.compute((frame_input.elapsed_time * config.cheats.time_mult) as f32);
-        frame_input
-            .screen()
-            .clear(clear_color_state)
-            .render(
-                &camera,
-                pmesh.render().into_iter(),
-                lights
-                    .iter()
-                    .map(|dlight| dlight.as_ref())
-                    .collect::<Vec<_>>()
-                    .as_slice(),
-            );
+
+        // so bcs we compute new body positions (`.render()`) after this
+        // the shadow compute will be a frame outdated
+        let light_render = lights.render(
+            1024,
+            pmesh.get_mesh().as_slice(),
+        );
+        frame_input.screen().clear(clear_color_state).render(
+            &camera,
+            pmesh.render().as_slice().into_iter(),
+            light_render.as_slice(),
+        );
 
         FrameOutput::default()
     });

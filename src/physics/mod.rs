@@ -1,3 +1,5 @@
+pub mod lighting;
+
 use three_d::*;
 
 pub struct GBody {
@@ -98,6 +100,13 @@ impl IntoIterator for PhysicsMesh {
 impl PhysicsMesh {
     pub fn add(&mut self, component: GBody) {
         self.components.push(component);
+    }
+
+    pub fn get_mesh(&mut self) -> Vec<&Mesh> {
+        self.components
+            .iter()
+            .map(|e| &e.gm_sphere.geometry)
+            .collect()
     }
 
     pub fn compute(&mut self, dt: f32) {

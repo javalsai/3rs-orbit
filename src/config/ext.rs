@@ -1,5 +1,7 @@
 use three_d::*;
 
+use crate::physics::lighting::ShadowableLight;
+
 impl super::ConfigCamera {
     pub fn as_camera(self, viewport: Viewport) -> Camera {
         Camera::new_perspective(
@@ -24,15 +26,16 @@ impl super::ConfigBody {
 }
 
 pub trait IntoDynLight {
-    fn into_dyn_light(self, ctx: &Context) -> Box<dyn Light>;
+    fn into_dyn_light(self, ctx: &Context) -> Box<dyn ShadowableLight>;
 }
 
 impl super::ConfigLights {
-    pub fn as_dyn_lights(self, ctx: &Context) -> Vec<Box<dyn Light>> {
-        std::iter::empty::<Box<dyn Light>>()
+    pub fn as_scene_lighting(self, ctx: &Context) -> crate::physics::lighting::SceneLights {
+        let shadowable_lights = std::iter::empty::<Box<dyn ShadowableLight>>()
             .chain(self.directional.into_iter().map(|l| l.into_dyn_light(ctx)))
-            .chain(self.ambient.into_iter().map(|l| l.into_dyn_light(ctx)))
-            .collect()
+            .chain(self.ambient.into_iter().map(|l| l.into_dyn_light(ctx)));
+
+        crate::physics::lighting::SceneLights { lights: shadowable_lights.collect() }
     }
 }
 
@@ -42,7 +45,7 @@ impl super::ConfigDirectionalLight {
     }
 }
 impl IntoDynLight for super::ConfigDirectionalLight {
-    fn into_dyn_light(self, ctx: &Context) -> Box<dyn Light> {
+    fn into_dyn_light(self, ctx: &Context) -> Box<dyn ShadowableLight> {
         Box::new(self.as_dlight(ctx))
     }
 }
@@ -53,7 +56,7 @@ impl super::ConfigAmbientLight {
     }
 }
 impl IntoDynLight for super::ConfigAmbientLight {
-    fn into_dyn_light(self, ctx: &Context) -> Box<dyn Light> {
+    fn into_dyn_light(self, ctx: &Context) -> Box<dyn ShadowableLight> {
         Box::new(self.as_alight(ctx))
     }
 }

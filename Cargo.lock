@@ -1302,6 +1302,7 @@ dependencies = [
 name = "threed-test"
 version = "0.1.0"
 dependencies = [
+ "anstyle",
  "anyhow",
  "clap",
  "rusttype",

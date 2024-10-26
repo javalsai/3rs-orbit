@@ -37,6 +37,9 @@ pub async fn run(config: config::Config) -> anyhow::Result<()> {
 
     let clear_color_state = srgba_as_clearstate(config.global.background_color, 255);
     window.render_loop(move |mut frame_input| {
+        if frame_input.elapsed_time > 100.0 {
+            println!("FUCK: {frame_input:?}");
+        }
         camera.set_viewport(frame_input.viewport);
         orbit_control.handle_events(&mut camera, &mut frame_input.events);
         fly_control.handle_events(&mut camera, &mut frame_input.events);
@@ -44,9 +47,11 @@ pub async fn run(config: config::Config) -> anyhow::Result<()> {
         pmesh.compute((frame_input.elapsed_time * config.cheats.time_mult) as f32);
 
         // so bcs we compute new body positions (`.render()`) after this
-        // the shadow compute will be a frame outdated
+        // the shadow compute will be a frame outdated, unless we call
+        // `.render()` twice...
+        pmesh.render();
         let light_render = lights.render(
-            1024,
+            4096,
             pmesh.get_mesh().as_slice(),
         );
         frame_input.screen().clear(clear_color_state).render(

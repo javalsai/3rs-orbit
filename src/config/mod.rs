@@ -4,7 +4,7 @@ mod serializers;
 use serializers as ser;
 
 use serde::{Deserialize, Serialize};
-use three_d::{degrees, vec3, Degrees, Srgba, Vector3, Zero};
+use three_d::{degrees, vec3, Degrees, Srgba, Vector3, Zero, Attenuation};
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(default)]
@@ -108,6 +108,8 @@ pub struct ConfigBody {
 pub struct ConfigLights {
     pub directional: Vec<ConfigDirectionalLight>,
     pub ambient: Vec<ConfigAmbientLight>,
+    pub point: Vec<ConfigPointLight>,
+    pub spotlight: Vec<ConfigSpotLight>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -133,6 +135,57 @@ pub struct ConfigAmbientLight {
         deserialize_with = "ser::deserialize_srgba"
     )]
     pub color: Srgba,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ConfigPointLight {
+    pub intensity: f32,
+    #[serde(
+        serialize_with = "ser::serialize_srgba",
+        deserialize_with = "ser::deserialize_srgba"
+    )]
+    pub color: Srgba,
+    #[serde(
+        serialize_with = "ser::serialize_vector3",
+        deserialize_with = "ser::deserialize_vector3"
+    )]
+    pub position: Vector3<f32>,
+    #[serde(
+        serialize_with = "ser::serialize_attenuation",
+        deserialize_with = "ser::deserialize_attenuation"
+    )]
+    pub attenuation: Attenuation,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ConfigSpotLight {
+    pub intensity: f32,
+    #[serde(
+        serialize_with = "ser::serialize_srgba",
+        deserialize_with = "ser::deserialize_srgba"
+    )]
+    pub color: Srgba,
+    #[serde(
+        serialize_with = "ser::serialize_vector3",
+        deserialize_with = "ser::deserialize_vector3"
+    )]
+    pub position: Vector3<f32>,
+    #[serde(
+        serialize_with = "ser::serialize_vector3",
+        deserialize_with = "ser::deserialize_vector3"
+    )]
+    pub direction: Vector3<f32>,
+    #[serde(
+        serialize_with = "ser::serialize_degrees",
+        deserialize_with = "ser::deserialize_degrees"
+    )]
+    pub cutoff: Degrees,
+    #[serde(
+        serialize_with = "ser::serialize_attenuation",
+        deserialize_with = "ser::deserialize_attenuation"
+    )]
+    pub attenuation: Attenuation,
+
 }
 
 

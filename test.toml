@@ -1,0 +1,32 @@
+[[bodies]]
+name = "a"
+position = [2, 0, 0]
+velocity = [0, 0.006, 0]
+color = [255, 0, 0, 255]
+radius = 1
+mass = 3e6
+
+[[bodies]]
+name = "b"
+position = [-2, 0, 0]
+velocity = [0, -0.006, 0]
+color = [0, 0, 255, 255]
+radius = 1
+mass = 3e6
+
+[[bodies]]
+name = "c"
+position = [0, 0, 0]
+velocity = [0, 0, 0]
+color = [255, 255, 255, 255]
+radius = 0.1
+mass = 5e5
+
+[[lights.directional]]
+intensity = 1.0
+color = [255, 255, 255, 255]
+direction = [0, 0, 1]
+
+[[lights.ambient]]
+intensity = 0.1
+color = [255, 255, 255, 255]

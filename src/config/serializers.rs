@@ -1,5 +1,5 @@
 use serde::{ser::SerializeTuple, Deserialize, Deserializer, Serialize, Serializer};
-use three_d::{Srgba, Vector3, Degrees, degrees};
+use three_d::{Srgba, Vector3, Degrees, degrees, Attenuation};
 
 pub fn serialize_vector3<S, T: Serialize>(
     vec: &Vector3<T>,
@@ -77,4 +77,32 @@ where
 {
     let deg = <f32>::deserialize(deserializer)?;
     Ok(degrees(deg))
+}
+
+pub fn serialize_attenuation<S>(
+    att: &Attenuation,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let mut tup = serializer.serialize_tuple(3)?;
+    tup.serialize_element(&att.constant)?;
+    tup.serialize_element(&att.linear)?;
+    tup.serialize_element(&att.quadratic)?;
+    tup.end()
+}
+
+pub fn deserialize_attenuation<'de, D>(
+    deserializer: D,
+) -> Result<Attenuation, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let tuple = <[f32; 3]>::deserialize(deserializer)?;
+    Ok(Attenuation {
+        constant: tuple[0],
+        linear: tuple[1],
+        quadratic: tuple[2],
+    })
 }

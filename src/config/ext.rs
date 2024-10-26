@@ -31,11 +31,18 @@ pub trait IntoDynLight {
 
 impl super::ConfigLights {
     pub fn as_scene_lighting(self, ctx: &Context) -> crate::physics::lighting::SceneLights {
+        println!("{self:?}");
         let shadowable_lights = std::iter::empty::<Box<dyn ShadowableLight>>()
             .chain(self.directional.into_iter().map(|l| l.into_dyn_light(ctx)))
-            .chain(self.ambient.into_iter().map(|l| l.into_dyn_light(ctx)));
+            .chain(self.ambient.into_iter().map(|l| l.into_dyn_light(ctx)))
+            .chain(self.point.into_iter().map(|l| l.into_dyn_light(ctx)))
+            .chain(self.spotlight.into_iter().map(|l| l.into_dyn_light(ctx)));
 
-        crate::physics::lighting::SceneLights { lights: shadowable_lights.collect() }
+        println!("{shadowable_lights:?}");
+
+        crate::physics::lighting::SceneLights {
+            lights: shadowable_lights.collect(),
+        }
     }
 }
 
@@ -61,3 +68,38 @@ impl IntoDynLight for super::ConfigAmbientLight {
     }
 }
 
+impl super::ConfigPointLight {
+    pub fn as_plight(self, ctx: &Context) -> PointLight {
+        PointLight::new(
+            ctx,
+            self.intensity,
+            self.color,
+            &self.position,
+            self.attenuation,
+        )
+    }
+}
+impl IntoDynLight for super::ConfigPointLight {
+    fn into_dyn_light(self, ctx: &Context) -> Box<dyn ShadowableLight> {
+        Box::new(self.as_plight(ctx))
+    }
+}
+
+impl super::ConfigSpotLight {
+    pub fn as_splight(self, ctx: &Context) -> SpotLight {
+        SpotLight::new(
+            ctx,
+            self.intensity,
+            self.color,
+            &self.position,
+            &self.direction,
+            self.cutoff,
+            self.attenuation,
+        )
+    }
+}
+impl IntoDynLight for super::ConfigSpotLight {
+    fn into_dyn_light(self, ctx: &Context) -> Box<dyn ShadowableLight> {
+        Box::new(self.as_splight(ctx))
+    }
+}

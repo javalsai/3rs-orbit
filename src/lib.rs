@@ -29,11 +29,7 @@ pub async fn run(config: config::Config) -> anyhow::Result<()> {
         .map(|body| body.as_gbody(&context).expect("error making body"))
         .for_each(|gbody| pmesh.add(gbody));
 
-    let lights: Vec<_> = config
-        .directional_lights
-        .into_iter()
-        .map(|light| light.as_dlight(&context))
-        .collect();
+    let lights = config.lights.as_dyn_lights(&context);
 
     //let skybox = Skybox::new_from_equirectangular(&context, &CpuTexture::default());
 
@@ -52,7 +48,7 @@ pub async fn run(config: config::Config) -> anyhow::Result<()> {
                 pmesh.render().into_iter(),
                 lights
                     .iter()
-                    .map(|dlight| dlight as &dyn Light)
+                    .map(|dlight| dlight.as_ref())
                     .collect::<Vec<_>>()
                     .as_slice(),
             );

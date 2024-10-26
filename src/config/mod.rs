@@ -103,6 +103,13 @@ pub struct ConfigBody {
     pub mass: f32,
 }
 
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(default)]
+pub struct ConfigLights {
+    pub directional: Vec<ConfigDirectionalLight>,
+    pub ambient: Vec<ConfigAmbientLight>,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ConfigDirectionalLight {
     pub intensity: f32,
@@ -115,8 +122,19 @@ pub struct ConfigDirectionalLight {
         serialize_with = "ser::serialize_vector3",
         deserialize_with = "ser::deserialize_vector3"
     )]
-    pub position: Vector3<f32>,
+    pub direction: Vector3<f32>,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ConfigAmbientLight {
+    pub intensity: f32,
+    #[serde(
+        serialize_with = "ser::serialize_srgba",
+        deserialize_with = "ser::deserialize_srgba"
+    )]
+    pub color: Srgba,
+}
+
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(default)]
@@ -124,7 +142,7 @@ pub struct Config {
     pub global: ConfigGlobal,
     pub camera: ConfigCamera,
     pub bodies: Vec<ConfigBody>,
-    pub directional_lights: Vec<ConfigDirectionalLight>,
+    pub lights: ConfigLights,
     pub cheats: ConfigCheats,
 }
 
@@ -160,16 +178,15 @@ pub fn example_config() -> Config {
     });
 
 
-    config.directional_lights.push(ConfigDirectionalLight {
+    config.lights.directional.push(ConfigDirectionalLight {
         intensity: 1.0,
         color: Srgba::WHITE,
-        position: vec3(0.0, -0.5, -0.5),
+        direction: vec3(0.0, -0.5, -0.5),
     });
 
-    config.directional_lights.push(ConfigDirectionalLight {
-        intensity: 1.0,
+    config.lights.ambient.push(ConfigAmbientLight {
+        intensity: 0.1,
         color: Srgba::WHITE,
-        position: vec3(0.0, 0.5, 0.5),
     });
 
     config
